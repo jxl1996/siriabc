@@ -607,9 +607,17 @@ SELECT city, count(*) as cnts FROM employees GROUP BY city HAVING count(*) >=3;
 
 
 
+## 6. 连接和子查询
+
+### 6.1 内连接
+
+![image-20260209005047225](./assets/image-20260209005047225.png)
 
 
-https://www.bilibili.com/video/BV1aGyhBDEp9?spm_id_from=333.788.player.switch&vd_source=39deefb075c4a3eec1d06e016f64113a&p=42
+
+
+
+
 
 
 
