@@ -6,6 +6,7 @@ export default defineConfig({
   title: "Siriabc",
   description: "A VitePress Site",
   lastUpdated:true,
+  appearance:"dark",
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     lastUpdated: {
