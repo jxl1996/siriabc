@@ -18,6 +18,6 @@ features:
   - title: Feature A
     link: /markdown-examples
   - title: Feature Bb
-  - title: Feature C
+  - title: Feature Cc
 ---
 
