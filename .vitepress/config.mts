@@ -2,6 +2,7 @@ import { defineConfig } from 'vitepress'
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
+  base:"/",
   title: "Siriabc",
   description: "A VitePress Site嘻嘻嘻",
   themeConfig: {
