@@ -17,7 +17,7 @@ hero:
 features:
   - title: Feature A
     link: /markdown-examples
-  - title: Feature B
+  - title: Feature Bb
   - title: Feature C
 ---
 
