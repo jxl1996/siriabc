@@ -1,0 +1,86 @@
+:root {
+    /* 整体布局（影响左右栏 + 内容区） */
+    /*--vp-layout-max-width: 1600px;*/
+
+    /* 中间内容区（核心） */
+    --vp-content-max-width: 970px;
+
+    /* 正文文字 */
+    --vp-font-family-base: -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei",
+    Helvetica, Arial, sans-serif;
+
+    /* 代码字体 */
+    --vp-font-family-mono: "JetBrains Mono", "Fira Code",
+    Menlo, Monaco, Consolas, monospace;
+}
+
+.VPDoc.has-aside .content-container {
+    max-width: var(--vp-content-max-width) !important;
+}
+
+/* 文档正文 */
+.vp-doc {
+    line-height: 1.85;
+    font-size: 16px;
+}
+
+/* 标题更有层次 */
+.vp-doc h1 {
+    font-size: 2.2rem;
+    margin-bottom: 1.2rem;
+}
+
+.vp-doc h2 {
+    font-size: 1.6rem;
+    margin-top: 2.2rem;
+}
+
+.vp-doc h3 {
+    font-size: 1.25rem;
+    margin-top: 1.6rem;
+}
+
+
+
+
+/* 行内代码 */
+.vp-doc :not(pre) > code {
+    font-size: 0.9em;
+    padding: 0.2em 0.4em;
+    border-radius: 4px;
+}
+
+/* 代码块 */
+.vp-doc pre {
+    font-size: 14px;
+    line-height: 1.65;
+    border-radius: 10px;
+    padding: 1.2rem 1.4rem;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+/* 防止代码块被内容宽度限制 */
+.vp-doc pre code {
+    white-space: pre;
+}
+
+
+
+/* 表格不挤 */
+.vp-doc table {
+    width: 100%;
+    font-size: 14px;
+}
+
+/* 列表更松一点 */
+.vp-doc ul,
+.vp-doc ol {
+    line-height: 1.8;
+}
+
+
+
+
+
