@@ -51,6 +51,7 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: .vitepress/dist
+          fetch-depth: 0
 
   # 部署工作
   deploy:

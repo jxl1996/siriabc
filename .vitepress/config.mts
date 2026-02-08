@@ -4,9 +4,23 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   base:"/",
   title: "Siriabc",
-  description: "A VitePress Site嘻嘻嘻",
+  description: "A VitePress Site",
+  lastUpdated:true,
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
+    lastUpdated: {
+      text: '最后更新时间',
+      formatOptions: {
+        dateStyle: 'short',
+        timeStyle: 'medium'
+      }
+    },
+
+    search:{
+      provider: 'local'
+    },
+
+
     nav: [
       { text: 'Home', link: '/' },
       // { text: 'Examples', link: '/markdown-examples' },
