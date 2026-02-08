@@ -613,6 +613,170 @@ SELECT city, count(*) as cnts FROM employees GROUP BY city HAVING count(*) >=3;
 
 ![image-20260209005047225](./assets/image-20260209005047225.png)
 
+创建测试表并添加测试数据:
+
+```sql
+-- 员工表
+CREATE TABLE "public"."emps" (
+  "id" int8 NOT NULL DEFAULT nextval('emps_id_seq'::regclass),
+  "name" varchar(255) COLLATE "pg_catalog"."default",
+  "dept_id" int4,
+  CONSTRAINT "emps_pkey" PRIMARY KEY ("id")
+);
+
+-- 部门表
+CREATE TABLE "public"."depts" (
+  "id" int8 NOT NULL DEFAULT nextval('depts_id_seq'::regclass),
+  "name" varchar(255) COLLATE "pg_catalog"."default",
+  CONSTRAINT "depts_pkey" PRIMARY KEY ("id")
+);
+
+INSERT INTO "public"."emps" ("id", "name", "dept_id") VALUES (1, '张三', 1);
+INSERT INTO "public"."emps" ("id", "name", "dept_id") VALUES (2, '李四', 2);
+INSERT INTO "public"."emps" ("id", "name", "dept_id") VALUES (3, '王五', 3);
+INSERT INTO "public"."emps" ("id", "name", "dept_id") VALUES (4, '赵六', NULL);
+INSERT INTO "public"."emps" ("id", "name", "dept_id") VALUES (5, '狗娃', NULL);
+
+INSERT INTO "public"."depts" ("id", "name") VALUES (1, '研发部');
+INSERT INTO "public"."depts" ("id", "name") VALUES (2, '测试部');
+INSERT INTO "public"."depts" ("id", "name") VALUES (3, '测试部');
+INSERT INTO "public"."depts" ("id", "name") VALUES (4, '市场部');
+
+```
+
+使用内连接查询:
+
+```
+mydb=# SELECT e.name as emp_name,d.name dep_name FROM emps e INNER JOIN depts d on e.dept_id = d.id;
+ emp_name | dep_name
+----------+----------
+ 张三     | 研发部
+ 李四     | 测试部
+ 王五     | 测试部
+(3 行记录)
+```
+
+上面的查询结果: 不包含没有部门的员工, 以及没有员工的部门
+
+### 6.2 左外连接和右外连接
+
+![image-20260209005353270](./assets/image-20260209005353270.png)
+
+使用左外连接查询:
+
+```
+mydb=# SELECT e.name as emp_name,d.name dep_name FROM emps e left JOIN depts d on e.dept_id = d.id;
+ emp_name | dep_name
+----------+----------
+ 张三     | 研发部
+ 李四     | 测试部
+ 王五     | 测试部
+ 赵六     |
+ 狗娃     |
+(5 行记录)
+```
+
+使用右外连接查询:
+
+```
+mydb=# SELECT e.name as emp_name,d.name dep_name FROM emps e right JOIN depts d on e.dept_id = d.id;
+ emp_name | dep_name
+----------+----------
+ 张三     | 研发部
+ 李四     | 测试部
+ 王五     | 测试部
+          | 市场部
+(4 行记录)
+```
+
+
+
+### 6.3 全外连接
+
+![image-20260209013602856](./assets/image-20260209013602856.png)
+
+使用全外连接查询:
+
+```
+mydb=# SELECT e.name as emp_name,d.name dep_name FROM emps e full JOIN depts d on e.dept_id = d.id;
+ emp_name | dep_name
+----------+----------
+ 张三     | 研发部
+ 李四     | 测试部
+ 王五     | 测试部
+ 赵六     |
+ 狗娃     |
+          | 市场部
+(6 行记录)
+```
+
+上面的语句查询结果: 包含员工表所有数据以及部门表所有数据, 包括没有部门的员工 以及没有员工的部门
+
+### 6.4 自连接
+
+```
+mydb=# SELECT e.name as empname ,m.name as managername FROM emps e  join emps m on e.manager_id = m.id;
+ empname | managername
+---------+-------------
+ 赵六    | 李四
+ 狗剩    | 李四
+ 狗娃    | 赵六
+ 铁柱    | 赵六
+ 嘎子    | 王五
+(5 行记录)
+```
+
+> [!IMPORTANT]
+>
+> 注意: `JOIN` **前面什么都不写时，默认就是 `INNER JOIN`**。
+
+### 6.5 交叉连接
+
+交叉连接: 会将一个表的每一行和另一个表每一行进行组合.
+
+案例: 查询出所有员工的所有排班可能性
+
+```
+mydb=# SELECT e.name as empname ,w.name as workshift FROM emps e CROSS JOIN work_shifts w;
+ empname | workshift
+---------+-----------
+ 张三    | 早班
+ 张三    | 中班
+ 张三    | 晚班
+ 李四    | 早班
+ 李四    | 中班
+ 李四    | 晚班
+ 王五    | 早班
+ 王五    | 中班
+ 王五    | 晚班
+ 赵六    | 早班
+ 赵六    | 中班
+ 赵六    | 晚班
+ 狗剩    | 早班
+ 狗剩    | 中班
+ 狗剩    | 晚班
+ 狗娃    | 早班
+ 狗娃    | 中班
+ 狗娃    | 晚班
+ 铁柱    | 早班
+ 铁柱    | 中班
+ 铁柱    | 晚班
+ 嘎子    | 早班
+ 嘎子    | 中班
+ 嘎子    | 晚班
+(24 行记录)
+```
+
+上面的案例中: 员工表8条数据, 排班表3条数据, 所以总结果为24条数据.
+
+
+
+
+
+https://www.bilibili.com/video/BV1aGyhBDEp9?spm_id_from=333.788.videopod.sections&vd_source=39deefb075c4a3eec1d06e016f64113a&p=47
+
+
+
 
 
 
