@@ -1092,3 +1092,157 @@ SELECT name FROM it_emps;
 
 https://www.bilibili.com/video/BV1aGyhBDEp9?spm_id_from=333.788.player.switch&vd_source=39deefb075c4a3eec1d06e016f64113a&p=56
 
+
+
+## 99. GORM中使用pgsql
+
+```go
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"github.com/lib/pq"
+	"gorm.io/datatypes"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+	"gorm.io/plugin/soft_delete"
+	"time"
+)
+
+type BaseModel struct {
+	ID        uint                  `json:"id" msgpack:"id" gorm:"primarykey"`                         // 主键ID
+	CreatedAt int64                 `json:"createdAt" msgpack:"createdAt" gorm:"autoCreateTime:milli"` // 使用时间戳毫秒数填充创建时间
+	UpdatedAt int64                 `json:"updatedAt" msgpack:"updatedAt" gorm:"autoUpdateTime:milli"` // 使用时间戳毫秒数填充更新时间
+	DeletedAt soft_delete.DeletedAt `json:"deletedAt" msgpack:"deletedAt" gorm:"softDelete:milli;index;default:0"`
+}
+
+type SysUser struct {
+	BaseModel
+	UserName string `json:"userName"  gorm:"type:varchar(255)"`
+	// 字符串数组
+	Tags pq.StringArray `gorm:"type:text[];"`
+	// 数字数组
+	Scores pq.Int32Array `gorm:"type:int[];"`
+	//  type JSONMap map[string]interface{}
+	Extra datatypes.JSONMap `gorm:"type:jsonb;default:'{}';"`
+	// []byte json
+	Abc datatypes.JSON `gorm:"type:jsonb;default:'[]';"`
+}
+
+var globalDB *gorm.DB
+
+func main() {
+
+	// https://github.com/go-gorm/postgres
+	gormConfig := &gorm.Config{
+		/*
+			GORM 在应用层缓存 prepared statement
+			减少 SQL parse
+			明显提升高并发性能
+		*/
+		PrepareStmt:                              true,
+		SkipDefaultTransaction:                   true,
+		DisableForeignKeyConstraintWhenMigrating: true, // 不生成实体外键
+	}
+
+	var (
+		host        = "localhost"
+		user        = "postgres"
+		password    = "123456"
+		dbname      = "mydb"
+		port        = 5432
+		search_path = "app,public"
+	)
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=disable TimeZone=Asia/Shanghai search_path=%s", host, user, password, dbname, port, search_path)
+
+	db, err := gorm.Open(postgres.New(postgres.Config{
+		DSN:                  dsn,
+		PreferSimpleProtocol: false, //
+	}), gormConfig)
+	if err != nil {
+		panic("gorm.Open error: " + err.Error())
+	}
+
+	sqlDB, err := db.DB()
+	if err != nil {
+		panic("db.DB() error: " + err.Error())
+	}
+	if err := sqlDB.Ping(); err != nil {
+		panic("sqlDB.Ping() error: " + err.Error())
+	}
+
+	// SetMaxIdleConns 用于设置连接池中空闲连接的最大数量。
+	sqlDB.SetMaxIdleConns(10)
+
+	// SetMaxOpenConns 设置打开数据库连接的最大数量。
+	sqlDB.SetMaxOpenConns(100)
+
+	// SetConnMaxLifetime 设置了连接可复用的最大时间。
+	sqlDB.SetConnMaxLifetime(time.Hour)
+
+	if err := db.AutoMigrate(&SysUser{}); err != nil {
+		panic("db.AutoMigrate() error: " + err.Error())
+	}
+	db.Exec(`create index if not exists idx_user_extra on sys_users USING gin(extra)`)
+
+	globalDB = db
+
+	Insert()
+	Query()
+}
+
+func Insert() {
+	globalDB.Create(&SysUser{
+		UserName: "狗娃",
+		Tags:     []string{"苹果", "香蕉"},
+		Scores:   []int32{1, 2, 32},
+		Extra: map[string]interface{}{
+			"name": "xx",
+			"age":  18,
+		},
+	})
+	globalDB.Create(&SysUser{
+		UserName: "张三",
+		Tags:     []string{"Apple", "balana"},
+		Scores:   []int32{1, 2, 32},
+		Extra: map[string]interface{}{
+			"name": "zhangsan",
+			"age":  20,
+		},
+	})
+	abc := []map[string]interface{}{
+		{"aa": "xxx", "bb": 18},
+		{"cc": "lisi", "dd": 20},
+	}
+	bytes, _ := json.Marshal(abc)
+	globalDB.Create(&SysUser{
+		UserName: "李四",
+		Tags:     []string{"sleep", "ok"},
+		Scores:   []int32{1, 123, 32},
+		Extra: map[string]interface{}{
+			"name": "li",
+			"age":  15,
+		},
+		Abc: bytes,
+	})
+}
+
+func Query() {
+	var u SysUser
+	// globalDB.Last(&u)
+	// fmt.Println(u)
+
+	// globalDB.Where("extra->>'name' = ?", "zhangsan").First(&u)
+	fmt.Println(u)
+
+	var users []SysUser
+	globalDB.Where("(extra->>'age')::int <= ?", 19).Find(&users)
+	for _, i := range users {
+		fmt.Println(i)
+
+	}
+}
+
+```
+
