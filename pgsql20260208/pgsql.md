@@ -769,19 +769,326 @@ mydb=# SELECT e.name as empname ,w.name as workshift FROM emps e CROSS JOIN work
 
 上面的案例中: 员工表8条数据, 排班表3条数据, 所以总结果为24条数据.
 
+### 6.6 子查询
+
+案例1( 在where中使用子查询 ): 查询出工资高于平均工资的员工
+
+```sql
+SELECT
+	* 
+FROM
+	employees 
+WHERE
+	salary > ( SELECT AVG ( salary ) avgsal FROM employees );
+```
+
+案例2( 在select中使用子查询 ): 查询每个员工的工资以及平均工资用于比较
+
+```sql
+SELECT
+	*,
+	( SELECT AVG ( salary ) FROM employees ) AS avgsal 
+FROM
+	employees;
+```
+
+### 6.7 公共表表达式(CTE)
+
+CTE（Common Table Expression）= 给一段子查询起名字
+
+建表并插入测试数据:
+
+```sql
+-- 用户表
+CREATE TABLE users (
+  id        BIGSERIAL PRIMARY KEY,
+  name      TEXT NOT NULL,
+  profile   JSONB NOT NULL,
+  created_at TIMESTAMP DEFAULT now()
+);
+
+-- 测试数据
+INSERT INTO users (name, profile) VALUES
+('Alice',  '{"active": true,  "age": 28}'),
+('Bob',    '{"active": false, "age": 35}'),
+('Carol',  '{"active": true,  "age": 22}'),
+('Dave',   '{"active": false, "age": 41}'),
+('Eve',    '{"active": true,  "age": 30}');
+
+-- 订单表
+CREATE TABLE orders (
+  id         BIGSERIAL PRIMARY KEY,
+  user_id    BIGINT NOT NULL,
+  amount     NUMERIC(10,2) NOT NULL,
+  created_at TIMESTAMP DEFAULT now()
+);
+CREATE INDEX idx_orders_user_id ON orders(user_id);
+
+-- 测试数据
+INSERT INTO orders (user_id, amount) VALUES
+-- Alice (id = 1)
+(1,  99.90),
+(1,  49.00),
+(1, 199.00),
+(1,  29.90),
+(1,  59.00),
+(1,  19.90),
+
+-- Bob (id = 2)
+(2,  88.00),
+(2,  15.00),
+
+-- Carol (id = 3)
+(3, 120.00),
+(3, 220.00),
+(3,  35.00),
+(3,  60.00),
+(3,  80.00),
+(3,  40.00),
+
+-- Dave (id = 4)
+(4,  10.00),
+
+-- Eve (id = 5)
+(5, 300.00),
+(5, 180.00),
+(5,  90.00);
+
+
+-- 分类表
+CREATE TABLE categories (
+  id        BIGSERIAL PRIMARY KEY,
+  parent_id BIGINT,
+  name      TEXT NOT NULL
+);
+
+-- 测试数据
+INSERT INTO categories (parent_id, name) VALUES
+(NULL, 'Tech'),          -- 1
+(NULL, 'Life'),          -- 2
+
+(1, 'Programming'),      -- 3
+(1, 'Hardware'),         -- 4
+
+(3, 'Backend'),          -- 5
+(3, 'Frontend'),         -- 6
+
+(2, 'Travel'),           -- 7
+(2, 'Food');             -- 8
+```
+
+---
 
 
 
+**案例1 : 查询出订单数 > 5 的活跃用户**
 
-https://www.bilibili.com/video/BV1aGyhBDEp9?spm_id_from=333.788.videopod.sections&vd_source=39deefb075c4a3eec1d06e016f64113a&p=47
+方式1. 不使用CTE
+
+```sql
+SELECT
+	* 
+FROM
+	users 
+WHERE
+	( profile -> 'active' ) :: BOOLEAN = TRUE 
+	AND ID IN (
+	SELECT 
+		t.user_id 
+	FROM
+		( SELECT user_id, COUNT ( * ) FROM orders GROUP BY user_id HAVING COUNT ( * ) > 5 ) t 
+	);
+	
+	
+-- 写法2
+SELECT
+	u.* 
+FROM
+	users u
+	INNER JOIN ( SELECT user_id, COUNT ( * ) FROM orders GROUP BY user_id HAVING COUNT ( * ) > 5 ) T ON u.ID = T.user_id 
+WHERE
+	( u.profile -> 'active' ) :: BOOLEAN = TRUE;
+```
+
+改写成CTE写法:
+
+```sql
+with tmp as (SELECT user_id,count(*) FROM orders GROUP BY user_id having count(*) > 5 )
+SELECT * FROM users  WHERE id in (select user_id from tmp) and (profile->'active')::bool = true ;
+```
+
+> [!NOTE]
+>
+> 注意: `IN` 后面只能是：值列表 或 子查询
+>  不能直接写 CTE 名字
+
+CTE写法2:
+
+```sql
+with tmp as (SELECT user_id,count(*) FROM orders GROUP BY user_id having count(*) > 5 )
+SELECT u.* FROM users u inner join tmp on u.id=tmp.user_id WHERE (u.profile->'active')::boolean is true;
+```
 
 
 
+**案例2: 找出未激活但是下过单的用户**
+
+```sql
+with t as (SELECT distinct user_id FROM orders)
+SELECT * FROM users WHERE id in (select user_id from t) and (profile->'active')::bool is false;
+
+-- 或者
+with t as (SELECT distinct user_id FROM orders)
+SELECT u.* FROM users u inner join t on u.id=t.user_id WHERE (u.profile->'active')::bool is false;
+```
+
+## 7. exists用法
+
+### 7.1 基本介绍和语法
+
+> **`EXISTS` 只关心一件事：子查询「有没有返回至少一行」**
+
+- 返回 ≥ 1 行 → `TRUE`
+- 返回 0 行 → `FALSE`
+- **不关心子查询具体返回什么**
+
+最基础语法:
+
+```sql
+SELECT *
+FROM table_a a
+WHERE EXISTS (
+  SELECT 1
+  FROM table_b b
+  WHERE b.a_id = a.id
+);
+
+```
+
+为什么 `SELECT 1`？
+
+- 只是占位
+- 写 `*`、`1`、`NULL` 都一样
+- 老习惯：`SELECT 1`
+
+查询下过单的用户:
+
+```sql
+SELECT u.* FROM users u 
+WHERE exists 
+(SELECT 1 FROM orders o WHERE o.user_id = u.id );
+```
+
+## 8. 函数
+
+### 8.1  upper 和 lower
+
+```
+mydb=# SELECT name , UPPER(name) upper_name , LOWER(name) lower_name FROM users;
+ name  | upper_name | lower_name
+-------+------------+------------
+ Alice | ALICE      | alice
+ Bob   | BOB        | bob
+ Carol | CAROL      | carol
+ Dave  | DAVE       | dave
+ Eve   | EVE        | eve
+```
+
+### 8.2 length
+
+```
+mydb=# SELECT name , length(name) len from users ORDER BY len desc;
+ name  | len
+-------+-----
+ Alice |   5
+ Carol |   5
+ Dave  |   4
+ Bob   |   3
+ Eve   |   3
+(5 行记录)
+```
+
+### 8.3 concat
+
+```
+mydb=# SELECT concat(name,',,','--','++',id) FROM users;
+    concat
+--------------
+ Alice,,--++1
+ Bob,,--++2
+ Carol,,--++3
+ Dave,,--++4
+ Eve,,--++5
+(5 行记录)
+```
+
+concat可以接收多个参数
+
+### 8.4 substring
+
+```
+mydb=# SELECT name, substring(name from 1 for 3) sub FROM users;
+ name  | sub
+-------+-----
+ Alice | Ali
+ Bob   | Bob
+ Carol | Car
+ Dave  | Dav
+ Eve   | Eve
+(5 行记录)
+```
+
+注意: from的下标是从1 开始 不是0开始
+
+### 8.5 trim
+
+```sql
+select trim('   hello  world  ') as s;
+```
+
+## 9. 集合运算符
+
+### 9.1 UNION和UNION ALL
+
+```sql
+SELECT name FROM hr_emps
+UNION
+SELECT name FROM it_emps;
+```
+
+UNION会去除重复项
+
+```sql
+SELECT name FROM hr_emps
+UNION ALL
+SELECT name FROM it_emps;
+```
+
+UNION ALL 不会去除重复项
 
 
 
+### 9.2 INTERSECT
+
+INTERSECT 返回两个集合的交集, 并且有去重效果
+
+```sql
+SELECT name FROM hr_emps
+INTERSECT 
+SELECT name FROM it_emps;
+```
+
+### 9.3 EXCEPT
+
+EXCEPT 返回在第一个表出现, 但是不在第二个表出现的结果, 并且有去重效果
+
+```sql
+SELECT name FROM hr_emps
+EXCEPT 
+SELECT name FROM it_emps;
+```
 
 
 
-
+https://www.bilibili.com/video/BV1aGyhBDEp9?spm_id_from=333.788.player.switch&vd_source=39deefb075c4a3eec1d06e016f64113a&p=56
 
