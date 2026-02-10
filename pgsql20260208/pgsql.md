@@ -1130,6 +1130,17 @@ type SysUser struct {
 	Abc datatypes.JSON `gorm:"type:jsonb;default:'[]';"`
 }
 
+// 指定schema
+func (SysUser) TableName() string {
+	return "admin.sys_users"
+}
+
+// 没有指定schema的表按照 search_path = "app,admin,public" 的顺序进行查找
+type User struct {
+	BaseModel
+	UserName string `json:"userName"  gorm:"type:varchar(255)"`
+}
+
 var globalDB *gorm.DB
 
 func main() {
@@ -1152,7 +1163,7 @@ func main() {
 		password    = "123456"
 		dbname      = "mydb"
 		port        = 5432
-		search_path = "app,public"
+		search_path = "app,admin,public"
 	)
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=disable TimeZone=Asia/Shanghai search_path=%s", host, user, password, dbname, port, search_path)
 
@@ -1181,9 +1192,16 @@ func main() {
 	// SetConnMaxLifetime 设置了连接可复用的最大时间。
 	sqlDB.SetConnMaxLifetime(time.Hour)
 
-	if err := db.AutoMigrate(&SysUser{}); err != nil {
+	// 创建schema
+	db.Exec("create schema if not exists app")
+	db.Exec("create schema if not exists admin")
+
+	// 数据迁移
+	if err := db.AutoMigrate(&SysUser{}, &User{}); err != nil {
 		panic("db.AutoMigrate() error: " + err.Error())
 	}
+
+	// 添加GIN索引
 	db.Exec(`create index if not exists idx_user_extra on sys_users USING gin(extra)`)
 
 	globalDB = db
@@ -1226,6 +1244,8 @@ func Insert() {
 		},
 		Abc: bytes,
 	})
+
+	globalDB.Create(&User{UserName: "test"})
 }
 
 func Query() {
@@ -1242,6 +1262,10 @@ func Query() {
 		fmt.Println(i)
 
 	}
+
+	var u2 User
+	globalDB.Last(&u2)
+	fmt.Println(u2)
 }
 
 ```
