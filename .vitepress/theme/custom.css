@@ -19,6 +19,17 @@
     max-width: var(--vp-content-max-width) !important;
 }
 
+
+html {
+    scroll-behavior: smooth;
+}
+
+.vp-doc h2,
+.vp-doc h3 {
+    scroll-margin-top: 80px;
+}
+
+
 /* 文档正文 */
 .vp-doc {
     line-height: 1.85;

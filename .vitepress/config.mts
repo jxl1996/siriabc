@@ -16,6 +16,10 @@ export default defineConfig({
         timeStyle: 'medium'
       }
     },
+    outline: {
+      level: [2, 3], // 显示 h2 和 h3
+      label: '目录'
+    },
 
     search:{
       provider: 'local'
