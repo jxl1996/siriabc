@@ -1179,6 +1179,80 @@ SELECT setval('users_id_seq', (select max(id) FROM users), true);
 ALTER SEQUENCE users_id_seq RESTART WITH 100000;
 ```
 
+### 10.2 视图
+
+#### 10.2.1 视图基本用法
+
+创建测试表和测试数据:
+
+```sql
+-- 员工表
+CREATE TABLE emps (
+	id serial PRIMARY key,
+	name VARCHAR(255),
+	dept_id int ,
+    salary numeric(10,2)
+);
+-- 部门表
+CREATE TABLE depts (
+	id serial PRIMARY key,
+	name VARCHAR(255)
+);
+-- 索引
+create index if not exists idx_emps_dept_id on emps(dept_id);
+
+
+-- 测试数据
+-- 部门
+INSERT INTO depts VALUES ( nextval('depts_id_seq'),'研发部' );
+INSERT INTO depts VALUES ( nextval('depts_id_seq'),'测试部' );
+INSERT INTO depts VALUES ( nextval('depts_id_seq'),'市场部' );
+
+-- 员工
+INSERT INTO emps (name,dept_id,salary) VALUES 
+('张三',1,100),
+('李四',1,200),
+('王五',1,300),
+('狗娃',2,400),
+('狗剩',2,500),
+('铁蛋',2,600),
+('柱子',3,700),
+('强子',3,800),
+('梁子',3,900);
+```
+
+需求1: 写一个视图, 查询出研发部和测试部的信息, 要求包含员工信息,和部门名称
+
+```sql
+CREATE view myview1 AS SELECT
+e.*,
+d.NAME AS dept_name 
+FROM
+	emps e
+	INNER JOIN depts d ON e.dept_id = d.ID 
+WHERE
+	d.NAME IN ( '研发部', '测试部' );
+	
+-- 查询视图
+SELECT * from myview1;
+SELECT name,dept_name from myview1 WHERE dept_id=1;
+```
+
+需求2: 写一个视图, 查询出每个部门的平均工资, 要求展示部门ID, 部门名称, 平均工资
+
+```sql
+CREATE VIEW myview3 AS SELECT
+d.ID AS did,
+d.NAME AS dname,
+COALESCE ( AVG ( e.salary ) :: NUMERIC ( 10, 2 ), 0 ) 
+FROM
+	emps e
+	RIGHT JOIN depts d ON e.dept_id = d.ID 
+GROUP BY
+	did,
+	dname;
+```
+
 
 
 ## 99. GORM中使用pgsql
