@@ -1127,7 +1127,7 @@ ALTER SEQUENCE my_seq RESTART WITH 100;
 select setval('my_seq', 100, false);
 ```
 
-> [!CAUTION]
+> [!NOTE]
 >
 > **注意**:
 >
