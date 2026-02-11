@@ -1088,9 +1088,96 @@ EXCEPT
 SELECT name FROM it_emps;
 ```
 
+## 10. 高级SQL
 
+### 10.1 序列
 
-https://www.bilibili.com/video/BV1aGyhBDEp9?spm_id_from=333.788.player.switch&vd_source=39deefb075c4a3eec1d06e016f64113a&p=56
+#### 10.1.1 序列的基本用法
+
+```sql
+-- 创建一个序列
+CREATE SEQUENCE my_seq START 10 INCREMENT 20;
+
+-- 创建一个测试表
+CREATE TABLE tests (
+	id bigserial PRIMARY KEY,
+	no int
+);
+
+-- 插入数据
+INSERT INTO tests (no) values( nextval('my_seq') );
+INSERT INTO tests (no) values( nextval('my_seq') );
+INSERT INTO tests (no) values( nextval('my_seq') );
+INSERT INTO tests (no) values( nextval('my_seq') );
+```
+
+#### 10.1.4 修改序列值
+
+查询当前的序列值:
+
+```sql
+SELECT CURRVAL('my_seq');
+```
+
+将下一个序列值重置为100: 
+
+```sql
+ALTER SEQUENCE my_seq RESTART WITH 100;
+-- 或者
+select setval('my_seq', 100, false);
+```
+
+> [!CAUTION]
+>
+> **注意**:
+>
+> | 写法                                | 类型 | 下次 nextval 返回 |
+> | ----------------------------------- | ---- | ----------------- |
+> | ALTER SEQUENCE ... RESTART WITH 100 | DDL  | 100               |
+> | setval('my_seq', 100, false)        | 函数 | 100               |
+> | setval('my_seq', 100, true)         | 函数 | 100的下一个序列值 |
+>
+> 如果`setval`只传两个参数: `select setval('my_seq', 100);` , 第三个参数默认为`true`
+>
+> ---
+>
+> 
+>
+> `setval`为什么前面要加 `select`？
+>
+> setval: 是一个 **函数（function）**，不是语句。
+>
+> 在 PostgreSQL 里：
+>
+> - 调函数必须用 `SELECT`
+> - 或在 PL/pgSQL 里用 `PERFORM`
+>
+> ---
+>
+>  
+>
+> ✅ **推荐场景**
+>
+> | 场景                             | 推荐           |
+> | -------------------------------- | -------------- |
+> | 重置表自增ID或者清空表后重置序列 | ALTER SEQUENCE |
+> | 批量修正序列值                   | setval         |
+> | 根据 max(id) 修复序列            | setval         |
+
+案例: 修正users表的id序列
+
+```sql
+-- setval第三个参数为true 
+-- 注意: 第二个参数 (select max(id) FROM users) 左右有个括号.
+-- 原因: 本质是：函数参数里放子查询时，SQL 语法要求必须加括号。
+SELECT setval('users_id_seq', (select max(id) FROM users), true);
+```
+
+案例: 项目需求中要求用户表的id从100000开始
+
+```sql
+ALTER SEQUENCE users_id_seq RESTART WITH 100000;
+```
 
 
 
