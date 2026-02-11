@@ -18,7 +18,7 @@ export default defineConfig({
     },
     outline: {
       level: [2, 3], // 显示 h2 和 h3
-      label: '目录'
+      label: '大纲'
     },
 
     search:{
