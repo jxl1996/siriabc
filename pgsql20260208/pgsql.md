@@ -1253,6 +1253,35 @@ GROUP BY
 	dname;
 ```
 
+#### 10.2.2 补充知识COALESCE
+
+```sql
+-- 如果名字是null , 就显示保密
+SELECT id,COALESCE(name,'保密') FROM emps ORDER BY id;
+
+-- 如果工资是Null 就显示0
+SELECT id, COALESCE(salary, 0) FROM emps ORDER BY id;
+
+-- 如果工资之和为null , 就显示0
+SELECT dept_id, COALESCE(sum(salary),0) FROM emps GROUP BY dept_id;
+```
+
+注意: count 不需要使用COALESCE来处理结果, 因为COUNT 永远不返回 NULL
+
+#### 10.2.3 删除视图
+
+```sql
+DROP VIEW IF EXISTS myview1;
+DROP VIEW IF EXISTS myview2;
+DROP VIEW IF EXISTS myview3;
+```
+
+
+
+
+
+https://www.bilibili.com/video/BV1aGyhBDEp9?spm_id_from=333.788.player.switch&vd_source=39deefb075c4a3eec1d06e016f64113a&p=59
+
 
 
 ## 99. GORM中使用pgsql
