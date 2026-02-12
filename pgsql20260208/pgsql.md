@@ -1395,9 +1395,9 @@ SELECT to_timestamp('2025-02-12 12:23:24', 'YYYY-MM-DD HH24:MI:SS') + interval '
 
 ---
 
+### 
 
-
-https://www.bilibili.com/video/BV1aGyhBDEp9?spm_id_from=333.788.videopod.sections&vd_source=39deefb075c4a3eec1d06e016f64113a&p=60
+https://www.bilibili.com/video/BV1aGyhBDEp9?spm_id_from=333.788.player.switch&vd_source=39deefb075c4a3eec1d06e016f64113a&p=63
 
 ## 99. GORM中使用pgsql
 
