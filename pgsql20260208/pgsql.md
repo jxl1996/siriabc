@@ -1278,11 +1278,126 @@ DROP VIEW IF EXISTS myview3;
 
 
 
+### 10.3 类型转换
+
+#### 10.3.1 显式转换
+
+将字符串转换为int: 
+
+```sql
+mydb=# select cast('100' as integer) + 50 as total;
+ total
+-------
+   150
+(1 行记录)
+
+mydb=# select '250'::integer + 100 as total;
+ total
+-------
+   350
+(1 行记录)
+```
+
+---
+
+将字符串转换为日期:
+
+```sql
+将字符串转换为date 然后加10天
+mydb=# select cast('2025-02-12' as date) + interval '10 days' as future_date;
+     future_date
+---------------------
+ 2025-02-22 00:00:00
+(1 行记录)
+
+mydb=# select '2025-02-12'::timestamp + interval '10 days' as future_date;
+     future_date
+---------------------
+ 2025-02-22 00:00:00
+ 
+ 
+ mydb=# select '2025-02-12 10:09:09'::timestamp + interval '10 days' as future_date;
+     future_date
+---------------------
+ 2025-02-22 10:09:09
+(1 行记录)
+```
+
+---
 
 
-https://www.bilibili.com/video/BV1aGyhBDEp9?spm_id_from=333.788.player.switch&vd_source=39deefb075c4a3eec1d06e016f64113a&p=59
+
+#### 10.3.2 使用函数转换
+
+`to_char`将日期转换为字符串并格式化:
+
+```sql
+mydb=# SELECT to_char(now(), 'YYYY-MM-DD HH24:MI:SS');
+       to_char
+---------------------
+ 2026-02-12 18:47:35
+(1 行记录)
+```
+
+---
+
+将秒级时间戳转换为时间类型:
+
+```sql
+mydb=# SELECT to_timestamp(1707732123);
+      to_timestamp
+------------------------
+ 2024-02-12 18:02:03+08
+(1 行记录)
+```
+
+---
+
+格式化秒级时间戳:
+
+```sql
+mydb=# SELECT to_char(to_timestamp(1707732123), 'YYYY-MM-DD HH24:MI:SS');
+       to_char
+---------------------
+ 2024-02-12 18:02:03
+(1 行记录)
+```
+
+---
+
+格式化毫秒时间戳:
+
+```sql
+SELECT to_char(to_timestamp(1707732123456 / 1000.0), 'YYYY-MM-DD HH24:MI:SS');
+
+SELECT to_timestamp(1707732123456/1000.0);
+```
+
+注意: 建议用 `1000.0`，否则会整数除法丢精度。
+
+---
+
+将字符串日期转换为真正的日期:
+
+```sql
+SELECT to_date('2025-02-12', 'YYYY-MM-DD');
+SELECT to_date('2025-02-12', 'YYYY-MM-DD') + interval '10 days' as newdate;
+```
+
+---
+
+将字符串时间转换为真正的时间:
+
+```sql
+SELECT to_timestamp('2025-02-12 12:23:24', 'YYYY-MM-DD HH24:MI:SS');
+SELECT to_timestamp('2025-02-12 12:23:24', 'YYYY-MM-DD HH24:MI:SS') + interval '2 days' as newtime;
+```
+
+---
 
 
+
+https://www.bilibili.com/video/BV1aGyhBDEp9?spm_id_from=333.788.videopod.sections&vd_source=39deefb075c4a3eec1d06e016f64113a&p=60
 
 ## 99. GORM中使用pgsql
 
