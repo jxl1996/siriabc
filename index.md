@@ -15,9 +15,10 @@ hero:
 #      link: /api-examples
 
 features:
-  - title: PostgresSQL 20260208
-    link: /pgsql20260208/pgsql.md
-  - title: Feature Bb
-  - title: Feature Ccdd
+  - title: PostgreSQL
+    link: /PostgreSQL/pgsql20260208.md
+    
+  - title: Feature A
+  - title: Feature B
 ---
 
